@@ -1,6 +1,6 @@
 [package]
 name = "better-alt1"
-version = "0.1.1"
+version = "0.1.2"
 description = "Passive screen-reading overlay toolkit"
 license = "MIT"
 edition = "2021"
