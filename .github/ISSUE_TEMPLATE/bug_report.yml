@@ -1,0 +1,81 @@
+name: Bug report
+description: Something misbehaves, misreads, or breaks
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thanks — a good report here is the whole contribution (see CONTRIBUTING.md).
+        The display questions matter more than they look: screen capture bugs are almost
+        always about DPI scaling, monitors, or interface transparency.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature
+      options:
+        - Inventory watch
+        - AFK warden
+        - On-game overlay
+        - Capture / preview
+        - Updater / install
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+      placeholder: Slots with items in them read as empty after I switched to the transparent interface theme…
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot of the watched area
+      description: >
+        For anything detection-related this is the single most useful thing you can
+        attach — drag an image of the inventory/area as it looked when it misread.
+        A screenshot of the whole client works too.
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "0.1.1 (Settings page, or the installer filename)"
+    validations:
+      required: true
+
+  - type: input
+    id: display
+    attributes:
+      label: Windows + display setup
+      description: Windows version, resolution, display scaling %, number of monitors.
+      placeholder: "Windows 11, 3840x2160 at 150%, 2 monitors"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: client-mode
+    attributes:
+      label: Client display mode
+      options:
+        - Windowed
+        - Fullscreen / borderless
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transparency
+    attributes:
+      label: Interface transparency
+      description: In-game interface settings — transparency changes how empty slots read.
+      options:
+        - Opaque (default)
+        - Some transparency
+        - Heavy transparency
+        - Not sure

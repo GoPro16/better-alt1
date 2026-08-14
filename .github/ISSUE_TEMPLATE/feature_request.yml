@@ -1,0 +1,30 @@
+name: Feature request
+description: Something the app should watch for or tell you about
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem
+      description: The situation in-game where the app should have helped and didn't.
+      placeholder: When I'm mining, I don't notice the rockertunity orb until it's gone…
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: How you imagine it working
+      description: Optional — what the app would watch, and how it would alert you.
+
+  - type: checkboxes
+    id: compliance
+    attributes:
+      label: Compliance check
+      description: >
+        This app observes pixels and informs you — it never acts on the game. Features
+        that need synthetic input, memory reading, or any form of automation will be
+        closed regardless of how useful they'd be (see the README's compliance rules).
+      options:
+        - label: This feature only watches the screen and alerts me; my hands stay the only input.
+          required: true
