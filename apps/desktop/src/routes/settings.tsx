@@ -1,8 +1,10 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Bug, ChevronDown, ChevronRight, Lightbulb } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { reportBug, requestFeature } from "@/lib/bug-report";
 import { CaptureDiagnostics } from "@/components/capture-diagnostics";
 import { TargetPicker } from "@/components/target-picker";
 import { Button } from "@/components/ui/button";
@@ -49,7 +51,39 @@ function SettingsPage() {
         onChange={(devTools) => update({ ...settings, devTools })}
       />
       {settings.devTools && <DiagnosticsCard />}
+      <AboutCard />
     </div>
+  );
+}
+
+/** Version readout and the feedback exits. The bug button opens the GitHub issue form
+ * with version and display environment prefilled — the fields users misreport most. */
+function AboutCard() {
+  const [version, setVersion] = useState<string>();
+
+  useEffect(() => {
+    getVersion().then(setVersion, () => setVersion(undefined));
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">About</CardTitle>
+        <CardDescription>
+          better-alt1 {version ?? ""} — it observes, it never acts.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={() => void reportBug()}>
+          <Bug />
+          Report a bug
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => void requestFeature()}>
+          <Lightbulb />
+          Request a feature
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

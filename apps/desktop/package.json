@@ -20,6 +20,7 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tauri-apps/api": "catalog:",
+    "@tauri-apps/plugin-opener": "catalog:",
     "@tauri-apps/plugin-process": "catalog:",
     "@tauri-apps/plugin-updater": "catalog:",
     "class-variance-authority": "catalog:",

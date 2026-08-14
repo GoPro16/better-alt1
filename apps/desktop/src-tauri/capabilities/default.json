@@ -17,6 +17,10 @@
     "core:window:allow-show",
     "core:window:allow-hide",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://github.com/GoPro16/better-alt1/*" }]
+    }
   ]
 }
