@@ -1,0 +1,11 @@
+# cargo-audit configuration (CI runs `cargo audit` from the repo root, which is where
+# this file is discovered). Every ignore needs a reason and an exit condition.
+[advisories]
+ignore = [
+  # quick-xml 0.30 DoS advisories. It is only a build-dependency of `xcb` (Linux X11,
+  # pulled by xcap) — it is not in the Windows target graph at all, and on Linux it only
+  # parses xcb's own bundled protocol XML at build time, never untrusted input.
+  # Drop these when xcb updates to quick-xml >= 0.41.
+  "RUSTSEC-2026-0194",
+  "RUSTSEC-2026-0195",
+]
