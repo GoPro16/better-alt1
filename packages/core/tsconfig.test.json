@@ -1,0 +1,13 @@
+{
+  // Typechecks the tests, which the emitting build deliberately excludes. Tests may use
+  // node built-ins (fs for fixtures, perf_hooks for timing); the library itself may not.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "test/**/*"]
+}

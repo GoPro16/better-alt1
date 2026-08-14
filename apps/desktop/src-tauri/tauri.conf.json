@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "better-alt1",
+  "version": "0.1.0",
+  "identifier": "com.betteralt1.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm dev:web",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "better-alt1",
+        "width": 420,
+        "height": 580,
+        "resizable": false,
+        "center": true,
+        "decorations": false
+      },
+      {
+        "label": "overlay",
+        "title": "better-alt1 overlay",
+        "url": "overlay.html",
+        "width": 200,
+        "height": 230,
+        "resizable": true,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "focus": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRBRkQ0OENEM0FFNDNGNEQKUldSTlArUTZ6VWo5U2dTSlJFSU83TWdlL0pFbXNmMmxnZGhzREovVS9vUnBDUFJ0TXNGSWp1K3IK",
+      "endpoints": [
+        "https://github.com/GoPro16/better-alt1/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

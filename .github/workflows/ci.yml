@@ -1,0 +1,36 @@
+# Runs the same gates as `pnpm check` plus the Rust suite, on the platform we ship.
+# PRs only — pushes to main get checked by the release workflow before anything ships,
+# so per-push CI would mostly be noise.
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # oxlint + compliance scan + tsc -b + vitest
+      - run: pnpm check
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      # Display-dependent tests are `#[ignore]`d and stay local; fixture-backed tests run here.
+      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml

@@ -1,0 +1,79 @@
+# Cut a release from the Actions tab: pick a bump (patch/minor/major), and this bumps the
+# version in every manifest, commits, tags, builds the installer, signs the updater
+# artifact with TAURI_SIGNING_PRIVATE_KEY, and publishes a GitHub Release including
+# latest.json — the manifest the app's updater polls (see plugins.updater in
+# tauri.conf.json).
+#
+# Everything happens in one run because a tag pushed with the default GITHUB_TOKEN
+# deliberately does not trigger other workflows. The tag trigger below exists only as a
+# fallback for a hand-pushed tag, and skips the bump (it builds whatever version the
+# manifests already say — make sure they match the tag).
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - run: pnpm install --frozen-lockfile
+
+      # The same gates CI runs on PRs. They run here, before the bump commits and tags
+      # anything, so a failed release leaves no trace to clean up.
+      - run: pnpm check
+
+      - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+      - name: Bump version, commit, tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          $version = node scripts/bump-version.mjs ${{ inputs.bump }}
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          # Keep Cargo.lock's own entry in step with Cargo.toml so the repo never shows
+          # a stale version. Resolves metadata only; nothing is compiled here.
+          cargo update -p better-alt1 --manifest-path apps/desktop/src-tauri/Cargo.toml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: release v$version"
+          git tag "v$version"
+          git push origin "HEAD:${{ github.ref_name }}" "v$version"
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: v__VERSION__
+          releaseName: better-alt1 v__VERSION__
+          releaseDraft: false

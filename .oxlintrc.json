@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "import", "unicorn", "oxc", "react"],
+  "env": {
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn",
+    "pedantic": "off",
+    "style": "off"
+  },
+  "rules": {
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "no-console": "off",
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "warn",
+    "unicorn/prefer-node-protocol": "error",
+    "import/no-cycle": "error",
+    "react/react-in-jsx-scope": "off",
+    "import/no-unassigned-import": "off"
+  },
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/target/**",
+    "**/src-tauri/gen/**",
+    "**/routeTree.gen.ts",
+    "apps/desktop/src/components/ui/**"
+  ],
+  "overrides": [
+    {
+      "files": ["apps/desktop/src/**/*.{ts,tsx}"],
+      "env": { "browser": true }
+    },
+    {
+      "files": ["scripts/**/*.mjs", "**/*.config.ts"],
+      "env": { "node": true }
+    }
+  ]
+}

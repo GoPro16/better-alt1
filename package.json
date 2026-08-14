@@ -1,0 +1,31 @@
+{
+  "name": "better-alt1",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.20.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @better-alt1/desktop dev",
+    "build": "pnpm -r build",
+    "tauri": "pnpm --filter @better-alt1/desktop tauri",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "lint:compliance": "node scripts/check-compliance.mjs",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "fixture": "cargo run --manifest-path apps/desktop/src-tauri/Cargo.toml --bin capture-fixture --",
+    "check": "pnpm lint && pnpm lint:compliance && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "catalog:",
+    "oxlint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

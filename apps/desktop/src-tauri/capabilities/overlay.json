@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "overlay",
+  "description": "The overlay only listens for status events from the main window and makes itself click-through. It never captures and never invokes app commands.",
+  "windows": ["overlay"],
+  "permissions": ["core:default", "core:window:allow-set-ignore-cursor-events"]
+}

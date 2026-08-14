@@ -1,0 +1,53 @@
+{
+  "name": "@better-alt1/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "dev:web": "vite",
+    "routes": "tsr generate",
+    "build": "pnpm routes && tsc -b && vite build",
+    "build:app": "tauri build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "typecheck": "pnpm routes && tsc -b"
+  },
+  "dependencies": {
+    "@better-alt1/core": "workspace:*",
+    "@better-alt1/plugin-sdk": "workspace:*",
+    "@tanstack/react-form": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "@tauri-apps/api": "catalog:",
+    "@tauri-apps/plugin-process": "catalog:",
+    "@tauri-apps/plugin-updater": "catalog:",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "lucide-react": "catalog:",
+    "motion": "catalog:",
+    "next-themes": "catalog:",
+    "radix-ui": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "sonner": "catalog:",
+    "tailwind-merge": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/react-query-devtools": "catalog:",
+    "@tanstack/react-router-devtools": "catalog:",
+    "@tanstack/router-cli": "catalog:",
+    "@tanstack/router-plugin": "catalog:",
+    "@tauri-apps/cli": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "shadcn": "catalog:",
+    "tailwindcss": "catalog:",
+    "tw-animate-css": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}
