@@ -5,7 +5,7 @@ reads the pixels already on your screen and tells you when something needs your
 attention — nothing more.
 
 <p align="center">
-  <img src=".github/preview.png" width="400" alt="better-alt1 watching an inventory: a live slot grid, 15 free, alert threshold set to 3">
+  <img src=".github/inventory-watch.gif" width="640" alt="better-alt1 watching an inventory live: the slot grid fills as items are gathered, then the alert fires">
 </p>
 
 **It observes. It never acts.** No synthetic keyboard or mouse input, no game process
