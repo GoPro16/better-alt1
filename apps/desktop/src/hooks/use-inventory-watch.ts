@@ -1,4 +1,5 @@
 import type { Rect } from "@better-alt1/core";
+import { cursorPosition } from "@tauri-apps/api/window";
 import { useEffect, useRef, useState } from "react";
 import { createAlertGate, raiseAlert } from "@/lib/alert";
 import { captureFrame, frameRelease } from "@/lib/capture";
@@ -28,6 +29,9 @@ export interface InventoryWatchState {
 
 interface WatchOptions {
   targetId: string | undefined;
+  /** The target's virtual-desktop bounds — needed to map the OS cursor into the frame
+   * so the slot under it can be held (see cursorMaskedSlots). */
+  targetBounds: Rect | undefined;
   region: Rect | undefined;
   config: InventoryConfig;
   enabled: boolean;
@@ -44,6 +48,7 @@ interface WatchOptions {
  */
 export function useInventoryWatch({
   targetId,
+  targetBounds,
   region,
   config,
   enabled,
@@ -62,6 +67,13 @@ export function useInventoryWatch({
   const gateRef = useRef(createAlertGate());
   const lastChangeAtRef = useRef(performance.now());
   const lastOccupancyRef = useRef<string>("");
+  // Settled occupancy and the last raw read, for hysteresis (see settleSlots).
+  const acceptedRef = useRef<boolean[] | undefined>(undefined);
+  const pendingRef = useRef<boolean[] | undefined>(undefined);
+  // Read inside the tick without re-running the effect when enumeration refreshes it —
+  // bounds only move when the client window moves, and a one-tick lag there is harmless.
+  const targetBoundsRef = useRef(targetBounds);
+  targetBoundsRef.current = targetBounds;
 
   const regionKey = region ? `${region.x},${region.y},${region.width},${region.height}` : "";
   const { inset, tolerance, alertAtFree, sound, flash } = config;
@@ -77,6 +89,10 @@ export function useInventoryWatch({
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const parsed = parseRegionKey(regionKey);
+
+    // A new region or grid shape is a new watch — settle from scratch.
+    acceptedRef.current = undefined;
+    pendingRef.current = undefined;
 
     const tick = async () => {
       const started = performance.now();
@@ -101,7 +117,21 @@ export function useInventoryWatch({
 
         // The grid may include background cells past slot 28 (partial last row on wide
         // layouts); everything downstream sees real slots only.
-        const slots = result.occupied.slice(0, SLOT_COUNT);
+        const raw = result.occupied.slice(0, SLOT_COUNT);
+
+        // The RS3 client draws its own cursor into the framebuffer, so hovering a slot
+        // adds interior detail that reads as an item. Hold the slot(s) under the cursor
+        // at their last settled state instead of trusting this read.
+        const masked = await cursorMaskedSlots({
+          targetBounds: targetBoundsRef.current,
+          region: parsed,
+          frameWidth: handle.width,
+          frameHeight: handle.height,
+          columns,
+          rows,
+        });
+        const slots = settleSlots(raw, masked, acceptedRef, pendingRef);
+        if (cancelled) return;
 
         setOccupied(slots);
         setLastScanMs(Math.round(performance.now() - started));
@@ -161,6 +191,91 @@ export function useInventoryWatch({
   }, [enabled]);
 
   return { columns, rows, freeCount, occupied, alerting, unchangedForMs, lastScanMs, error };
+}
+
+/** Cursor sprite extent past its hotspot, in physical pixels. The RS3 cursor hangs
+ * down-right, plus a little slack on the other sides for the hotspot inset. */
+const CURSOR_PAD = 28;
+
+/**
+ * Which slot indices the OS cursor currently overlaps, in frame-grid terms. Reading the
+ * cursor is passive observation — the compliance line is *moving* it. Any failure means
+ * "mask nothing": worse detection for one tick beats a dead watch loop.
+ */
+async function cursorMaskedSlots(args: {
+  targetBounds: Rect | undefined;
+  region: Rect;
+  frameWidth: number;
+  frameHeight: number;
+  columns: number;
+  rows: number;
+}): Promise<Set<number>> {
+  const { targetBounds, region, frameWidth, frameHeight, columns, rows } = args;
+  const masked = new Set<number>();
+  if (!targetBounds) return masked;
+
+  let cursor;
+  try {
+    cursor = await cursorPosition();
+  } catch {
+    return masked;
+  }
+
+  // Virtual desktop -> target-local -> region-local, then into frame pixels (the frame
+  // can be a decimated copy of the region, so scale rather than assume 1:1).
+  const rx = cursor.x - targetBounds.x - region.x;
+  const ry = cursor.y - targetBounds.y - region.y;
+  const scaleX = frameWidth / region.width;
+  const scaleY = frameHeight / region.height;
+  const cellWidth = frameWidth / columns;
+  const cellHeight = frameHeight / rows;
+
+  for (const dx of [-4, CURSOR_PAD]) {
+    for (const dy of [-4, CURSOR_PAD]) {
+      const column = Math.floor(((rx + dx) * scaleX) / cellWidth);
+      const row = Math.floor(((ry + dy) * scaleY) / cellHeight);
+      if (column < 0 || column >= columns || row < 0 || row >= rows) continue;
+      const index = row * columns + column;
+      if (index < SLOT_COUNT) masked.add(index);
+    }
+  }
+  return masked;
+}
+
+/**
+ * Per-slot hysteresis: a slot only changes state after two consecutive reads agree on
+ * the new value, and masked (cursor-covered) slots hold their settled state outright.
+ * Catches the cursor transiting between ticks and the hover tooltip shading a slot the
+ * mask misses, at the cost of one poll interval of latency on real changes.
+ */
+function settleSlots(
+  raw: boolean[],
+  masked: Set<number>,
+  acceptedRef: { current: boolean[] | undefined },
+  pendingRef: { current: boolean[] | undefined },
+): boolean[] {
+  const accepted = acceptedRef.current;
+  if (accepted === undefined || accepted.length !== raw.length) {
+    // First read of a watch: trust it, so startup shows state immediately.
+    acceptedRef.current = [...raw];
+    pendingRef.current = [...raw];
+    return raw;
+  }
+
+  const pending = pendingRef.current ?? [...raw];
+  const settled = raw.map((value, i) => {
+    if (masked.has(i) || value === accepted[i]) {
+      pending[i] = accepted[i] as boolean;
+      return accepted[i] as boolean;
+    }
+    if (pending[i] === value) return value; // second consecutive read agreeing — flip
+    pending[i] = value;
+    return accepted[i] as boolean;
+  });
+
+  acceptedRef.current = settled;
+  pendingRef.current = pending;
+  return settled;
 }
 
 function parseRegionKey(key: string): Rect | undefined {

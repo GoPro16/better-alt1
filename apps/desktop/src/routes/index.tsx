@@ -61,6 +61,7 @@ function WatchPage() {
 
   const watch = useInventoryWatch({
     targetId: target?.id,
+    targetBounds: target?.bounds,
     region: settings.region,
     config,
     // The setup preview streams whole-target grabs; running the watch alongside it would

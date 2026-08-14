@@ -18,6 +18,10 @@ on:
         type: choice
         options: [patch, minor, major]
         default: patch
+      notes:
+        description: Release notes (optional, markdown — a commit list is appended)
+        type: string
+        default: ""
   push:
     tags: ["v*"]
 
@@ -30,6 +34,9 @@ jobs:
       # Pinned to commit SHAs, not tags — this job holds the updater signing key, and a
       # moved tag would run someone else's code next to it. Keep SHA + comment in step.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Full history + tags, so release notes can list commits since the last tag.
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
@@ -56,6 +63,26 @@ jobs:
 
       - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
+      # Runs before the bump so the commit list covers last tag -> now, without the
+      # bump commit itself. The typed notes go through an env var, not interpolation,
+      # so markdown (or anything else) in them cannot become script.
+      - name: Compose release notes
+        id: notes
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          NOTES: ${{ inputs.notes }}
+        run: |
+          $prev = git describe --tags --abbrev=0 2>$null
+          $range = if ($prev) { "$prev..HEAD" } else { "HEAD" }
+          $log = (git log $range --no-merges --pretty=format:"- %s") -join "`n"
+          $body = $env:NOTES
+          if ($body) { $body += "`n`n" }
+          $body += "### Commits`n`n$log"
+          $delim = "NOTES_EOF_$([guid]::NewGuid().ToString('N'))"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "body<<$delim"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value $body
+          Add-Content -Path $env:GITHUB_OUTPUT -Value $delim
+
       - name: Bump version, commit, tag
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -80,4 +107,5 @@ jobs:
           projectPath: apps/desktop
           tagName: v__VERSION__
           releaseName: better-alt1 v__VERSION__
+          releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: false
